@@ -11,7 +11,7 @@
                                               PREMIUM  ·  by rezadevx
 ```
 
-### ** Full-Fidelity Roblox Macro Recorder & Playback Engine**
+### Full-Fidelity Roblox Macro Recorder & Playback Engine
 *Record everything. Replay perfectly. No limits.*
 
 ---
