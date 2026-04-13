@@ -184,7 +184,7 @@ Credit to rezadevx is appreciated but not required.
 ```
 ╔══════════════════════════════════════════════════════╗
 ║                                                      ║
-║           DIBUAT DENGAN SEPENUH PIKIRAN OLEH         ║
+║           DIBUAT DI PIKIRAN OLEH         ║
 ║                                                      ║
 ║   ██████╗ ███████╗███████╗ █████╗ ██████╗ ██╗   ██╗ ║
 ║   ██╔══██╗██╔════╝╚══███╔╝██╔══██╗██╔══██╗██║   ██║ ║
