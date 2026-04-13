@@ -11,7 +11,7 @@
                                               PREMIUM  ·  by rezadevx
 ```
 
-### **🎬 Full-Fidelity Roblox Macro Recorder & Playback Engine**
+### ** Full-Fidelity Roblox Macro Recorder & Playback Engine**
 *Record everything. Replay perfectly. No limits.*
 
 ---
@@ -26,7 +26,7 @@
 
 ---
 
-## 📖 Overview
+
 
 **rezadevx premium** adalah macro engine tingkat lanjut yang ditulis dalam **Luau** untuk Roblox. Tidak seperti script macro biasa yang hanya merekam posisi karakter, engine ini merekam *seluruh state* karakter pada setiap frame — animasi, kamera, fisika, klik mouse, tool di tangan, hingga perubahan gravitasi — dan kemudian memutarnya kembali dengan **interpolasi CFrame yang mulus** menggunakan sistem fisika `AlignPosition` dan `AlignOrientation`.
 
@@ -34,9 +34,9 @@ Hasilnya adalah **replay yang tidak bisa dibedakan dari gerakan asli manusia**, 
 
 ---
 
-## ✨ Fitur Utama
+## Fitur Utama
 
-### 🔴 MacroEngine — Inti dari Segalanya
+### MacroEngine — Inti dari Segalanya
 
 Seluruh kecerdasan script berpusat di objek `MacroEngine`. Ia mengelola state machine dengan empat kondisi: **Idle → Recording → Playing → Paused**, dan setiap transisi ditangani secara bersih dengan cleanup otomatis.
 
@@ -52,7 +52,7 @@ Seluruh kecerdasan script berpusat di objek `MacroEngine`. Ia mengelola state ma
 - Status klik mouse kiri (`MouseButton1`)
 - `WalkSpeed`, `JumpPower`, dan `workspace.Gravity` saat itu juga
 
-### 🟢 Playback Engine — Bukan Sekadar "Move To Position"
+###  Playback Engine — Bukan Sekadar "Move To Position"
 
 Pemutaran ulang menggunakan teknik **frame interpolation** — engine mencari dua frame terdekat (sebelum dan sesudah waktu saat ini), lalu *melakukan lerp* di antaranya. Ini menciptakan gerakan yang halus bahkan pada kecepatan rendah.
 
@@ -66,13 +66,13 @@ AlignPosition + AlignOrientation
 
 Attachment "mover" di `workspace.Terrain` digerakkan setiap frame sesuai interpolasi, dan fisika Roblox secara natural menarik karakter mengikutinya — menghasilkan pergerakan yang terasa organik dan bereaksi terhadap dunia.
 
-### 💾 FSM — File System Manager
+###  FSM — File System Manager
 
 Setiap macro disimpan sebagai file **JSON** di folder `rezadevxautowalk/` di workspace executor. Data yang disimpan mencakup `Frames` (array rekaman) dan `Dict` (kamus animasi yang mengompres ID aset menjadi angka pendek untuk efisiensi ukuran file).
 
 FSM memeriksa ketersediaan API filesystem executor (`writefile`, `readfile`, `isfile`, dll) secara otomatis — jika tidak tersedia (misalnya di executor yang lebih terbatas), script tetap berjalan namun menonaktifkan fitur simpan/muat.
 
-### 🎛️ GUI — Antarmuka yang Bersih dan Fungsional
+### GUI — Antarmuka yang Bersih dan Fungsional
 
 GUI dibuat sepenuhnya dengan Roblox Instance API, dengan tema gelap yang konsisten:
 
@@ -89,7 +89,7 @@ Panel kiri berisi kontrol utama, panel kanan menampilkan daftar macro tersimpan 
 
 ---
 
-## ⚙️ Cara Kerja — Alur Teknis
+##  Cara Kerja — Alur Teknis
 
 ```
 [Record] ──► Heartbeat loop merekam state tiap frame
@@ -114,7 +114,7 @@ Panel kiri berisi kontrol utama, panel kanan menampilkan daftar macro tersimpan 
 
 ---
 
-## 🚀 Cara Menggunakan
+##  Cara Menggunakan
 
 **1. Jalankan script** melalui executor Roblox yang mendukung filesystem API (misalnya Synapse X, KRNL, Fluxus, dll).
 
@@ -166,7 +166,7 @@ Script menangani edge case dengan teliti. Jika karakter mati saat recording atau
 
 ---
 
-## 📄 Lisensi
+##  Lisensi
 
 Script ini dirilis sebagai **open source** di bawah lisensi **MIT**. Bebas digunakan, dimodifikasi, dan didistribusikan dengan menyertakan credit kepada pembuat asli.
 
@@ -179,7 +179,7 @@ Credit to rezadevx is appreciated but not required.
 
 <div align="center">
 
-## 👑 Credits
+##  Credits
 
 ```
 ╔══════════════════════════════════════════════════════╗
