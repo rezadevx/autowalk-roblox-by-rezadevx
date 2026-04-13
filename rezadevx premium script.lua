@@ -104,6 +104,8 @@ function MacroEngine:CleanUp()
         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
         self.LastM1State = false
     end
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+    
     self:ResetCharacterState()
 end
 
@@ -111,36 +113,44 @@ function MacroEngine:ResetCharacterState()
     local char = LocalPlayer.Character
     if not char then return end
     
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+    end
+
     local hum = char:FindFirstChild("Humanoid")
     if hum then
         if self.OrgStats.WS then hum.WalkSpeed = self.OrgStats.WS end
         if self.OrgStats.JP then hum.JumpPower = self.OrgStats.JP end
+        if self.OrgStats.AutoRot ~= nil then hum.AutoRotate = self.OrgStats.AutoRot end
+        
+        local animator = hum:FindFirstChild("Animator")
+        if animator then
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                track:Stop(0)
+            end
+        end
     end
     
     if self.OrgStats.Grav then workspace.Gravity = self.OrgStats.Grav end
-    LocalPlayer:Move(Vector3.zero, false)
+    LocalPlayer:Move(Vector3.zero, true)
 end
 
 function MacroEngine:SetupPhysics(root)
     local MoverAttachment = Instance.new("Attachment", workspace.Terrain)
     local rootAtt = root:FindFirstChild("RootAttachment") or Instance.new("Attachment", root)
     
-    local AP = Instance.new("AlignPosition")
-    AP.Attachment0 = rootAtt
-    AP.Attachment1 = MoverAttachment
-    AP.Mode = Enum.PositionAlignmentMode.TwoAttachment
-    AP.RigidityEnabled = true
-    AP.Parent = root
-    
     local AO = Instance.new("AlignOrientation")
     AO.Attachment0 = rootAtt
     AO.Attachment1 = MoverAttachment
     AO.Mode = Enum.OrientationAlignmentMode.TwoAttachment
-    AO.RigidityEnabled = true
+    AO.RigidityEnabled = false
+    AO.Responsiveness = 150
+    AO.MaxTorque = math.huge
     AO.Parent = root
 
     table.insert(self.Bin, MoverAttachment)
-    table.insert(self.Bin, AP)
     table.insert(self.Bin, AO)
     self.PhysicsProps.TargetCF = MoverAttachment
 end
@@ -186,7 +196,8 @@ function MacroEngine:Record()
     self.OrgStats = {
         WS = hum.WalkSpeed, 
         JP = hum.JumpPower, 
-        Grav = workspace.Gravity
+        Grav = workspace.Gravity,
+        AutoRot = hum.AutoRotate
     }
 
     table.insert(self.Bin, RunService.Heartbeat:Connect(function()
@@ -240,7 +251,8 @@ function MacroEngine:Play()
     self.OrgStats = {
         WS = hum.WalkSpeed, 
         JP = hum.JumpPower, 
-        Grav = workspace.Gravity
+        Grav = workspace.Gravity,
+        AutoRot = hum.AutoRotate
     }
 
     local startIdx, startTime = self:GetClosestFrame(root.Position)
@@ -248,6 +260,7 @@ function MacroEngine:Play()
     self.CurrentTime = startTime
     self.LastM1State = false
 
+    hum.AutoRotate = false
     self:SetupPhysics(root)
     
     local RevDict = {}
@@ -260,7 +273,7 @@ function MacroEngine:Play()
         end
     end
 
-    table.insert(self.Bin, RunService.RenderStepped:Connect(function(dt)
+    table.insert(self.Bin, RunService.Stepped:Connect(function(_, dt)
         if hum.Health <= 0 then 
             self.State = "Idle"
             self:CleanUp()
@@ -283,12 +296,15 @@ function MacroEngine:Play()
         end
 
         if pF then
-            local alpha = math.clamp((self.CurrentTime - pF.t) / (cF.t - pF.t), 0, 1)
+            local timeDiff = cF.t - pF.t
+            local alpha = timeDiff > 0 and math.clamp((self.CurrentTime - pF.t) / timeDiff, 0, 1) or 1
 
             local pCFrame = CFrame.new(unpack(pF.cf))
             local cCFrame = CFrame.new(unpack(cF.cf))
+            local targetCF = pCFrame:Lerp(cCFrame, alpha)
+            
             if self.PhysicsProps.TargetCF then 
-                self.PhysicsProps.TargetCF.WorldCFrame = pCFrame:Lerp(cCFrame, alpha) 
+                self.PhysicsProps.TargetCF.WorldCFrame = targetCF 
             end
             
             if pF.grav then workspace.Gravity = pF.grav end
@@ -303,6 +319,10 @@ function MacroEngine:Play()
                 LocalPlayer:Move(blendMD, false) 
             else 
                 LocalPlayer:Move(Vector3.zero, false) 
+            end
+
+            if (root.Position - targetCF.Position).Magnitude > 3 then
+                root.CFrame = targetCF
             end
 
             if pF.st and hum:GetState().Value ~= pF.st then 
@@ -335,17 +355,29 @@ function MacroEngine:Play()
                 end
             end
 
+            local activeThisFrame = {}
             for _, animData in ipairs(pF.anims or {}) do
                 local assetStr = RevDict[animData.i]
                 if assetStr and self.AnimCache[assetStr] then
                     local track = self.AnimCache[assetStr]
                     if not track.IsPlaying then 
                         track:Play() 
+                        track.TimePosition = animData.tp
+                    else
+                        if math.abs(track.TimePosition - animData.tp) > 0.15 then
+                            track.TimePosition = animData.tp
+                        end
                     end
-                    track.TimePosition = animData.tp
                     track:AdjustWeight(animData.w, 0)
                     track:AdjustSpeed(animData.s * self.Speed)
+                    activeThisFrame[track] = true
                 end
+            end
+            
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do 
+                if not activeThisFrame[track] then 
+                    track:Stop(0.1) 
+                end 
             end
         end
     end))
@@ -361,6 +393,8 @@ end
 function MacroEngine:Resume()
     if self.State == "Paused" then
         local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hum = char:WaitForChild("Humanoid")
+        hum.AutoRotate = false
         self:SetupPhysics(char:WaitForChild("HumanoidRootPart"))
         self.State = "Playing"
     end
