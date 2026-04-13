@@ -168,7 +168,7 @@ Script menangani edge case dengan teliti. Jika karakter mati saat recording atau
 
 ##  Lisensi
 
-Script ini dirilis sebagai **open source** di bawah lisensi **MIT**. Bebas digunakan, dimodifikasi, dan didistribusikan dengan menyertakan credit kepada pembuat asli.
+Script ini dirilis sebagai **open source** di bawah lisensi **MIT**. Bebas digunakan, dimodifikasi, dan didistribusikan dengan menyertakan credit kepada pembuat asli dan dilarang di perjual belikan
 
 ```
 MIT License — Free to use, modify, and distribute.
