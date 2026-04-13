@@ -7,10 +7,9 @@ local HttpService = game:GetService("HttpService")
 local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
 
 local CONFIG = { 
-    Folder = "rezadevxautowalk" 
+    Folder = "rezadevx_autowalk" 
 }
 
 local THEME = {
@@ -105,7 +104,6 @@ function MacroEngine:CleanUp()
         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
         self.LastM1State = false
     end
-    Camera.CameraType = Enum.CameraType.Custom
     self:ResetCharacterState()
 end
 
@@ -115,18 +113,11 @@ function MacroEngine:ResetCharacterState()
     
     local hum = char:FindFirstChild("Humanoid")
     if hum then
-        local animator = hum:FindFirstChild("Animator")
-        if animator then
-            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do 
-                track:Stop(0) 
-            end
-        end
         if self.OrgStats.WS then hum.WalkSpeed = self.OrgStats.WS end
         if self.OrgStats.JP then hum.JumpPower = self.OrgStats.JP end
     end
     
     if self.OrgStats.Grav then workspace.Gravity = self.OrgStats.Grav end
-    if char:FindFirstChild("Animate") then char.Animate.Disabled = false end
     LocalPlayer:Move(Vector3.zero, false)
 end
 
@@ -138,20 +129,14 @@ function MacroEngine:SetupPhysics(root)
     AP.Attachment0 = rootAtt
     AP.Attachment1 = MoverAttachment
     AP.Mode = Enum.PositionAlignmentMode.TwoAttachment
-    AP.RigidityEnabled = false
-    AP.Responsiveness = 150
-    AP.MaxForce = math.huge
-    AP.MaxVelocity = math.huge
+    AP.RigidityEnabled = true
     AP.Parent = root
     
     local AO = Instance.new("AlignOrientation")
     AO.Attachment0 = rootAtt
     AO.Attachment1 = MoverAttachment
     AO.Mode = Enum.OrientationAlignmentMode.TwoAttachment
-    AO.RigidityEnabled = false
-    AO.Responsiveness = 150
-    AO.MaxTorque = math.huge
-    AO.MaxAngularVelocity = math.huge
+    AO.RigidityEnabled = true
     AO.Parent = root
 
     table.insert(self.Bin, MoverAttachment)
@@ -224,16 +209,11 @@ function MacroEngine:Record()
         end
         
         local currentTool = char:FindFirstChildOfClass("Tool")
-        local cVel = root.AssemblyLinearVelocity
-        local aVel = root.AssemblyAngularVelocity
         local isJump = hum.Jump or hum:GetState() == Enum.HumanoidStateType.Jumping
         
         table.insert(self.Frames, {
             t = os.clock() - self.StartTime,
             cf = {root.CFrame:GetComponents()},
-            cam = {Camera.CFrame:GetComponents()},
-            vel = {cVel.X, cVel.Y, cVel.Z}, 
-            avel = {aVel.X, aVel.Y, aVel.Z},
             md = {hum.MoveDirection.X, hum.MoveDirection.Y, hum.MoveDirection.Z},
             st = hum:GetState().Value, 
             jump = isJump,
@@ -268,11 +248,8 @@ function MacroEngine:Play()
     self.CurrentTime = startTime
     self.LastM1State = false
 
-    if char:FindFirstChild("Animate") then char.Animate.Disabled = true end
     self:SetupPhysics(root)
     
-    Camera.CameraType = Enum.CameraType.Scriptable 
-
     local RevDict = {}
     for assetStr, idNum in pairs(self.AnimDict) do 
         RevDict[idNum] = assetStr 
@@ -283,7 +260,7 @@ function MacroEngine:Play()
         end
     end
 
-    table.insert(self.Bin, RunService.Stepped:Connect(function(_, dt)
+    table.insert(self.Bin, RunService.RenderStepped:Connect(function(dt)
         if hum.Health <= 0 then 
             self.State = "Idle"
             self:CleanUp()
@@ -314,13 +291,6 @@ function MacroEngine:Play()
                 self.PhysicsProps.TargetCF.WorldCFrame = pCFrame:Lerp(cCFrame, alpha) 
             end
             
-            if pF.cam and cF.cam then 
-                Camera.CFrame = CFrame.new(unpack(pF.cam)):Lerp(CFrame.new(unpack(cF.cam)), alpha) 
-            end
-            if pF.vel and cF.vel then 
-                root.AssemblyLinearVelocity = Vector3.new(unpack(pF.vel)):Lerp(Vector3.new(unpack(cF.vel)), alpha) 
-            end
-
             if pF.grav then workspace.Gravity = pF.grav end
             if pF.ws then hum.WalkSpeed = pF.ws end
             if pF.jp then hum.JumpPower = pF.jp end
@@ -329,7 +299,7 @@ function MacroEngine:Play()
             local cMD = Vector3.new(unpack(cF.md))
             local blendMD = pMD:Lerp(cMD, alpha)
             
-            if blendMD.Magnitude > 0.05 then 
+            if blendMD.Magnitude > 0.01 then 
                 LocalPlayer:Move(blendMD, false) 
             else 
                 LocalPlayer:Move(Vector3.zero, false) 
@@ -341,10 +311,6 @@ function MacroEngine:Play()
             
             if pF.jump then
                 hum.Jump = true
-                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                task.delay(0.05, function() 
-                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game) 
-                end)
             end
 
             local currentTool = char:FindFirstChildOfClass("Tool")
@@ -369,7 +335,6 @@ function MacroEngine:Play()
                 end
             end
 
-            local activeThisFrame = {}
             for _, animData in ipairs(pF.anims or {}) do
                 local assetStr = RevDict[animData.i]
                 if assetStr and self.AnimCache[assetStr] then
@@ -380,14 +345,7 @@ function MacroEngine:Play()
                     track.TimePosition = animData.tp
                     track:AdjustWeight(animData.w, 0)
                     track:AdjustSpeed(animData.s * self.Speed)
-                    activeThisFrame[track] = true
                 end
-            end
-            
-            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do 
-                if not activeThisFrame[track] then 
-                    track:Stop(0) 
-                end 
             end
         end
     end))
@@ -403,9 +361,7 @@ end
 function MacroEngine:Resume()
     if self.State == "Paused" then
         local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        if char:FindFirstChild("Animate") then char.Animate.Disabled = true end
         self:SetupPhysics(char:WaitForChild("HumanoidRootPart"))
-        Camera.CameraType = Enum.CameraType.Scriptable
         self.State = "Playing"
     end
 end
@@ -481,7 +437,7 @@ local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 20, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "rezadevx premium script"
+Title.Text = "rezadevx premium macro"
 Title.TextColor3 = THEME.TextPrimary
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 15
@@ -552,8 +508,8 @@ local function CreateControlBtn(parent, text, color, order)
     return Btn
 end
 
-local RecordBtn = CreateControlBtn(LeftPanel, "RECORD", THEME.Colors.Record, 2)
-local PlayBtn   = CreateControlBtn(LeftPanel, "PLAY", THEME.Colors.Play, 3)
+local RecordBtn = CreateControlBtn(LeftPanel, "RECORD ALL (F5)", THEME.Colors.Record, 2)
+local PlayBtn   = CreateControlBtn(LeftPanel, "PLAY NATIVE SYNC", THEME.Colors.Play, 3)
 
 local PauseResumeFrame = Instance.new("Frame", LeftPanel)
 PauseResumeFrame.Size = UDim2.new(1, 0, 0, 34)
