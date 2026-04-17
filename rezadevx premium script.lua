@@ -1,5 +1,3 @@
---- START OF FILE Paste ---
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -659,5 +657,3 @@ Tabs["autowalk"].Frame.Visible = true
 
 OpenUI() -- Start with smooth open
 RefreshUI()
-
---- END OF FILE Paste ---
